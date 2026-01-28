@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Magical Chinese Characters Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .bg-animal {
+            position: fixed;
+            font-size: 2rem;
+            opacity: 0.1;
+            pointer-events: none;
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header h1 {
+            font-size: 1.6rem;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .level-indicator {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 6px 14px;
+            display: inline-block;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        
+        .score-board {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border-radius: 50px;
+            padding: 10px 18px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 900;
+            color: #667eea;
+            z-index: 100;
+            font-size: 1.1rem;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 30px;
+            padding: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .question-area {
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .canvas-container {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 15px;
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 25px;
+            border: 4px solid #e9ecef;
+            overflow: hidden;
+        }
+        
+        .drawing-canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .english-hint {
+            font-size: 1.8rem;
+            color: #333;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+        
+        .phonetic-hint {
+            font-size: 1rem;
+            color: #888;
+            font-weight: 600;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+        
+        .choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .choice-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            border-radius: 20px;
+            padding: 25px 15px;
+            color: white;
+            font-size: 2.5rem;
+            font-family: 'Noto Sans SC', 'SimHei', sans-serif;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+            position: relative;
+            overflow: hidden;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .choice-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .choice-btn.correct {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            animation: correctPulse 0.5s;
+        }
+        
+        .choice-btn.wrong {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            animation: shake 0.5s;
+        }
+        
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+        
+        .floating-hearts {
+            position: fixed;
+            pointer-events: none;
+            font-size: 2rem;
+            animation: flyUp 1s ease-out forwards;
+            z-index: 1000;
+        }
+        
+        @keyframes flyUp {
+            0% { opacity: 1; transform: translateY(0) scale(0); }
+            50% { transform: translateY(-50px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1); }
+        }
+        
+        .start-screen, .level-complete, .game-complete, .feedback-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .hidden { display: none !important; }
+        
+        .cute-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 50px;
+            padding: 18px 40px;
+            font-size: 1.3rem;
+            font-weight: 900;
+            margin-top: 20px;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+        
+        .cute-btn:active { transform: scale(0.95); }
+        
+        .mascot {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: wiggle 2s infinite;
+        }
+        
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+        
+        .star-rating {
+            font-size: 3rem;
+            margin: 20px 0;
+            animation: popIn 0.5s;
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .feedback-content {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            color: #333;
+            max-width: 320px;
+            width: 90%;
+            animation: slideUp 0.4s;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .big-reveal {
+            font-size: 4rem;
+            margin: 10px 0;
+            color: #667eea;
+        }
+        
+        .pinyin-reveal {
+            font-size: 1.5rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        .meaning-reveal {
+            font-size: 1.2rem;
+            color: #333;
+            font-weight: 700;
+        }
+        
+        .combo-text {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ff6b6b;
+            pointer-events: none;
+            opacity: 0;
+            animation: comboPop 0.8s;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        @keyframes comboPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(-50px); }
+        }
+        
+        .instruction-tip {
+            background: #fff3cd;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        
+        .level-desc {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animal" style="top: 10%; left: 5%;">🐼</div>
+    <div class="bg-animal" style="top: 20%; right: 5%; animation-delay: 1s;">🦊</div>
+    <div class="bg-animal" style="bottom: 30%; left: 8%; animation-delay: 2s;">🐰</div>
+
+    <div class="score-board">
+        <span>⭐</span>
+        <span id="score">0</span>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="start-screen">
+        <div class="mascot">🐲</div>
+        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Chinese Character Magic!</h1>
+        <p style="font-size: 1.1rem; margin-bottom: 30px; max-width: 300px; opacity: 0.95;">
+            Look at the picture, read the English word, then tap the matching Chinese character!
+        </p>
+        <button class="cute-btn" onclick="startGame()">Start Adventure! 🚀</button>
+    </div>
+
+    <!-- Feedback Screen (Correct Answer) -->
+    <div id="feedbackScreen" class="feedback-screen hidden" style="background: rgba(0,0,0,0.8);">
+        <div class="feedback-content">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+            <div class="big-reveal" id="feedbackChar">日</div>
+            <div class="pinyin-reveal" id="feedbackPinyin">rì</div>
+            <div class="meaning-reveal" id="feedbackMeaning">Sun</div>
+            <button class="cute-btn" onclick="nextQuestion()" style="margin-top: 20px;">Next ➔</button>
+        </div>
+    </div>
+
+    <!-- Level Complete -->
+    <div id="levelComplete" class="level-complete hidden">
+        <div class="star-rating">⭐⭐⭐</div>
+        <h2 style="font-size: 2rem; margin-bottom: 10px;">World Complete! 🎊</h2>
+        <p id="levelMessage" style="font-size: 1.2rem; margin-bottom: 20px;">Amazing work!</p>
+        <button class="cute-btn" onclick="nextLevel()">Next World 🌟</button>
+    </div>
+
+    <!-- Game Complete -->
+    <div id="gameComplete" class="game-complete hidden">
+        <div class="mascot">🏆</div>
+        <h1 style="font-size: 2rem; margin-bottom: 10px;">You're a Master!</h1>
+        <p style="font-size: 1.1rem; margin-bottom: 20px; opacity: 0.9;">
+            You learned all the magical characters!<br>
+            Dragon is so proud of you!
+        </p>
+        <div style="font-size: 3rem; margin: 20px 0;">🌸🎊🌸</div>
+        <button class="cute-btn" onclick="location.reload()">Play Again 🔄</button>
+    </div>
+
+    <!-- Main Game -->
+    <div class="container" id="gameContainer" style="display: none;">
+        <div class="header">
+            <h1>
+                <span id="levelIcon">🎨</span>
+                <span id="levelTitle" style="font-size: 1.3rem;">Picture World</span>
+            </h1>
+            <div class="level-indicator">
+                World <span id="currentLevel">1</span> of 3
+            </div>
+        </div>
+
+        <div class="game-card">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+            </div>
+            
+            <div class="instruction-tip" id="levelTip">
+                <span>💡</span>
+                <span>Which character looks like this picture?</span>
+            </div>
+
+            <div class="question-area">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" class="drawing-canvas" width="180" height="180"></canvas>
+                </div>
+                <div class="phonetic-hint" id="phoneticHint">Sounds like...</div>
+                <div class="english-hint" id="englishHint">Sun</div>
+            </div>
+            
+            <div class="choices" id="choicesContainer">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const gameData = {
+            1: {
+                title: "Picture Look-Alikes! 🎨",
+                icon: "🎨",
+                tip: "Look at the shape - which character matches the picture?",
+                chars: [
+                    { char: "日", pinyin: "rì", meaning: "sun", draw: 'sun' },
+                    { char: "山", pinyin: "shān", meaning: "mountain", draw: 'mountain' },
+                    { char: "水", pinyin: "shuǐ", meaning: "water", draw: 'water' },
+                    { char: "人", pinyin: "rén", meaning: "person", draw: 'person' },
+                    { char: "木", pinyin: "mù", meaning: "tree", draw: 'tree' }
+                ]
+            },
+            2: {
+                title: "Spot the Mark! 🔍",
+                icon: "🔍",
+                tip: "Look for the special mark on the picture!",
+                chars: [
+                    { char: "刃", pinyin: "rèn", meaning: "blade edge", draw: 'blade' },
+                    { char: "本", pinyin: "běn", meaning: "root", draw: 'root' },
+                    { char: "末", pinyin: "mò", meaning: "tip", draw: 'tip' }
+                ]
+            },
+            3: {
+                title: "Two in One! 👫",
+                icon: "👫",
+                tip: "Two pictures come together to make one meaning!",
+                chars: [
+                    { char: "休", pinyin: "xiū", meaning: "rest", draw: 'rest' },
+                    { char: "好", pinyin: "hǎo", meaning: "good", draw: 'good' },
+                    { char: "明", pinyin: "míng", meaning: "bright", draw: 'bright' }
+                ]
+            }
+        };
+
+        let currentLevel = 1;
+        let currentIndex = 0;
+        let score = 0;
+        let combo = 0;
+        let currentChars = [];
+        let currentChar = null;
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameContainer').style.display = 'block';
+            loadLevel(1);
+        }
+
+        function loadLevel(level) {
+            currentLevel = level;
+            currentIndex = 0;
+            currentChars = [...gameData[level].chars].sort(() => Math.random() - 0.5);
+            
+            document.getElementById('levelIcon').textContent = gameData[level].icon;
+            document.getElementById('levelTitle').textContent = gameData[level].title;
+            document.getElementById('levelTip').innerHTML = `<span>💡</span><span>${gameData[level].tip}</span>`;
+            document.getElementById('currentLevel').textContent = level;
+            
+            loadQuestion();
+        }
+
+        function drawOnCanvas(type) {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 180, 180);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            
+            switch(type) {
+                case 'sun':
+                    // Draw sun with rays
+                    ctx.fillStyle = '#FFD93D';
+                    ctx.beginPath();
+                    ctx.arc(90, 90, 40, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#FFA502';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    // Rays
+                    for(let i = 0; i < 8; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(90 + Math.cos(i * Math.PI / 4) * 50, 90 + Math.sin(i * Math.PI / 4) * 50);
+                        ctx.lineTo(90 + Math.cos(i * Math.PI / 4) * 65, 90 + Math.sin(i * Math.PI / 4) * 65);
+                        ctx.strokeStyle = '#FFD93D';
+                        ctx.lineWidth = 4;
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 'mountain':
+                    // Draw mountain peaks
+                    ctx.fillStyle = '#74B9FF';
+                    ctx.beginPath();
+                    ctx.moveTo(20, 140);
+                    ctx.lineTo(60, 60);
+                    ctx.lineTo(90, 100);
+                    ctx.lineTo(120, 50);
+                    ctx.lineTo(160, 140);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#0984E3';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    // Snow caps
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.moveTo(60, 60);
+                    ctx.lineTo(75, 82);
+                    ctx.lineTo(45, 85);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.moveTo(120, 50);
+                    ctx.lineTo(135, 72);
+                    ctx.lineTo(105, 75);
+                    ctx.closePath();
+                    ctx.fill();
+                    break;
+                    
+                case 'water':
+                    // Draw water waves
+                    ctx.strokeStyle = '#00CEC9';
+                    ctx.lineWidth = 4;
+                    for(let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(30, 80 + i * 25);
+                        ctx.bezierCurveTo(60, 60 + i * 25, 120, 100 + i * 25, 150, 80 + i * 25);
+                        ctx.stroke();
+                    }
+                    // Drops
+                    ctx.fillStyle = '#81ECEC';
+                    ctx.beginPath();
+                    ctx.arc(50, 50, 8, 0, Math.PI * 2);
+                    ctx.arc(130, 45, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'person':
+                    // Stick figure walking
+                    ctx.strokeStyle = '#FD79A8';
+                    ctx.lineWidth = 4;
+                    // Body
+                    ctx.beginPath();
+                    ctx.moveTo(90, 50);
+                    ctx.lineTo(90, 110);
+                    ctx.stroke();
+                    // Head
+                    ctx.fillStyle = '#FD79A8';
+                    ctx.beginPath();
+                    ctx.arc(90, 35, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Arms
+                    ctx.beginPath();
+                    ctx.moveTo(90, 70);
+                    ctx.lineTo(60, 90);
+                    ctx.moveTo(90, 70);
+                    ctx.lineTo(120, 85);
+                    ctx.stroke();
+                    // Legs
+                    ctx.beginPath();
+                    ctx.moveTo(90, 110);
+                    ctx.lineTo(70, 150);
+                    ctx.moveTo(90, 110);
+                    ctx.lineTo(110, 145);
+                    ctx.stroke();
+                    break;
+                    
+                case 'tree':
+                    // Tree with branches
+                    ctx.fillStyle = '#00B894';
+                    ctx.beginPath();
+                    ctx.arc(90, 70, 35, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Trunk
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(80, 100, 20, 50);
+                    // Branches
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(90, 110);
+                    ctx.lineTo(60, 90);
+                    ctx.moveTo(90, 100);
+                    ctx.lineTo(120, 85);
+                    ctx.stroke();
+                    break;
+                    
+                case 'blade':
+                    // Knife with edge mark
+                    ctx.fillStyle = '#B2BEC3';
+                    ctx.beginPath();
+                    ctx.moveTo(40, 60);
+                    ctx.lineTo(140, 60);
+                    ctx.lineTo(140, 100);
+                    ctx.lineTo(40, 100);
+                    ctx.closePath();
+                    ctx.fill();
+                    // Handle
+                    ctx.fillStyle = '#2D3436';
+                    ctx.fillRect(140, 70, 25, 20);
+                    // Red dot on edge
+                    ctx.fillStyle = '#FF3838';
+                    ctx.beginPath();
+                    ctx.arc(90, 60, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    // Label
+                    ctx.fillStyle = '#FF3838';
+                    ctx.font = 'bold 12px Nunito';
+                    ctx.fillText('Edge!', 75, 45);
+                    break;
+                    
+                case 'root':
+                    // Tree with marked root
+                    ctx.fillStyle = '#00B894';
+                    ctx.beginPath();
+                    ctx.arc(90, 60, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Trunk
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(82, 85, 16, 35);
+                    // Roots emphasized with red line
+                    ctx.strokeStyle = '#FF3838';
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(90, 120);
+                    ctx.lineTo(60, 140);
+                    ctx.moveTo(90, 120);
+                    ctx.lineTo(90, 145);
+                    ctx.moveTo(90, 120);
+                    ctx.lineTo(120, 140);
+                    ctx.stroke();
+                    // Root label
+                    ctx.fillStyle = '#FF3838';
+                    ctx.font = 'bold 12px Nunito';
+                    ctx.fillText('ROOT', 70, 160);
+                    break;
+                    
+                case 'tip':
+                    // Tree with marked top
+                    ctx.fillStyle = '#00B894';
+                    ctx.beginPath();
+                    ctx.arc(90, 70, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Trunk
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(82, 95, 16, 35);
+                    // Red circle on top branch
+                    ctx.strokeStyle = '#FF3838';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(90, 45, 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.fillStyle = '#FF3838';
+                    ctx.font = 'bold 12px Nunito';
+                    ctx.fillText('TOP!', 75, 30);
+                    break;
+                    
+                case 'rest':
+                    // Person leaning on tree
+                    ctx.fillStyle = '#00B894';
+                    ctx.beginPath();
+                    ctx.arc(120, 60, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Tree trunk
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(112, 90, 16, 50);
+                    // Person sitting/leaning
+                    ctx.strokeStyle = '#E84393';
+                    ctx.lineWidth = 4;
+                    // Head
+                    ctx.beginPath();
+                    ctx.arc(70, 80, 12, 0, Math.PI * 2);
+                    ctx.fillStyle = '#E84393';
+                    ctx.fill();
+                    // Body leaning
+                    ctx.beginPath();
+                    ctx.moveTo(70, 92);
+                    ctx.lineTo(85, 130);
+                    ctx.lineTo(110, 110);
+                    ctx.stroke();
+                    // Zzz
+                    ctx.fillStyle = '#74B9FF';
+                    ctx.font = 'bold 16px Nunito';
+                    ctx.fillText('Zzz...', 40, 60);
+                    break;
+                    
+                case 'good':
+                    // Thumbs up
+                    ctx.fillStyle = '#FDCB6E';
+                    ctx.strokeStyle = '#E17055';
+                    ctx.lineWidth = 3;
+                    // Palm
+                    ctx.beginPath();
+                    ctx.roundRect(70, 100, 40, 50, 10);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Thumb up
+                    ctx.fillStyle = '#FDCB6E';
+                    ctx.beginPath();
+                    ctx.roundRect(75, 50, 20, 50, 10);
+                    ctx.fill();
+                    ctx.stroke();
+                    // Thumb detail
+                    ctx.fillStyle = '#FFEAA7';
+                    ctx.beginPath();
+                    ctx.arc(75, 60, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                    
+                case 'bright':
+                    // Sun + Moon shining
+                    // Moon
+                    ctx.fillStyle = '#74B9FF';
+                    ctx.beginPath();
+                    ctx.arc(120, 70, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(110, 65, 20, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Sun
+                    ctx.fillStyle = '#FFD93D';
+                    ctx.beginPath();
+                    ctx.arc(60, 100, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    // Sun rays
+                    ctx.strokeStyle = '#FFD93D';
+                    ctx.lineWidth = 3;
+                    for(let i = 0; i < 6; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(60 + Math.cos(i * Math.PI / 3) * 30, 100 + Math.sin(i * Math.PI / 3) * 30);
+                        ctx.lineTo(60 + Math.cos(i * Math.PI / 3) * 40, 100 + Math.sin(i * Math.PI / 3) * 40);
+                        ctx.stroke();
+                    }
+                    // Sparkles
+                    ctx.fillStyle = '#FFEAA7';
+                    for(let pos of [[40,40], [140,120], [90,140]]) {
+                        ctx.beginPath();
+                        ctx.arc(pos[0], pos[1], 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+            }
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= currentChars.length) {
+                showLevelComplete();
+                return;
+            }
+            
+            currentChar = currentChars[currentIndex];
+            document.getElementById('englishHint').textContent = currentChar.meaning;
+            document.getElementById('phoneticHint').textContent = "Choose the Chinese character for:";
+            
+            drawOnCanvas(currentChar.draw);
+            
+            const progress = ((currentIndex) / currentChars.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            generateChoices();
+        }
+
+        function generateChoices() {
+            const container = document.getElementById('choicesContainer');
+            container.innerHTML = '';
+            
+            // Get distractors from all levels
+            let pool = [];
+            Object.values(gameData).forEach(l => {
+                l.chars.forEach(c => {
+                    if (c.char !== currentChar.char) pool.push(c);
+                });
+            });
+            
+            pool.sort(() => Math.random() - 0.5);
+            const distractors = pool.slice(0, 3);
+            const options = [currentChar, ...distractors].sort(() => Math.random() - 0.5);
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = opt.char;
+                btn.onclick = () => checkAnswer(opt.char === currentChar.char, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(isCorrect, btn) {
+            if (isCorrect) {
+                btn.classList.add('correct');
+                score += 10 + (combo * 5);
+                combo++;
+                document.getElementById('score').textContent = score;
+                createHearts(btn);
+                
+                if (combo > 1) {
+                    const comboText = document.createElement('div');
+                    comboText.className = 'combo-text';
+                    comboText.textContent = `${combo}x! 🔥`;
+                    document.querySelector('.game-card').appendChild(comboText);
+                    setTimeout(() => comboText.remove(), 800);
+                }
+                
+                setTimeout(() => showFeedback(), 600);
+            } else {
+                btn.classList.add('wrong');
+                combo = 0;
+                document.querySelector('.game-card').style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    document.querySelector('.game-card').style.animation = '';
+                }, 500);
+            }
+        }
+
+        function showFeedback() {
+            document.getElementById('feedbackChar').textContent = currentChar.char;
+            document.getElementById('feedbackPinyin').textContent = currentChar.pinyin;
+            document.getElementById('feedbackMeaning').textContent = currentChar.meaning;
+            document.getElementById('feedbackScreen').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            document.getElementById('feedbackScreen').classList.add('hidden');
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function createHearts(element) {
+            const rect = element.getBoundingClientRect();
+            const hearts = ['⭐', '💖', '🌟'];
+            
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('div');
+                    heart.className = 'floating-hearts';
+                    heart.textContent = hearts[i];
+                    heart.style.left = (rect.left + rect.width / 2 + (Math.random() - 0.5) * 40) + 'px';
+                    heart.style.top = (rect.top + window.scrollY) + 'px';
+                    document.body.appendChild(heart);
+                    setTimeout(() => heart.remove(), 1000);
+                }, i * 100);
+            }
+        }
+
+        function showLevelComplete() {
+            document.getElementById('levelComplete').classList.remove('hidden');
+            const msgs = ["Great job! 🎉", "Wonderful! 🌟", "Fantastic! 🚀"];
+            document.getElementById('levelMessage').textContent = msgs[currentLevel - 1];
+        }
+
+        function nextLevel() {
+            document.getElementById('levelComplete').classList.add('hidden');
+            if (currentLevel < 3) {
+                loadLevel(currentLevel + 1);
+            } else {
+                document.getElementById('gameComplete').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
